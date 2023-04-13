@@ -4,12 +4,46 @@
            :compiler-options {:optimizations :simple
                               :output-wrapper false
                               :source-map false}
-           :modules {:main {:exports {eminus emmy.env/-
-                                      emul emmy.env/*
-                                      ediv emmy.env//
+           :modules {:main {:exports {pi emmy.env/pi
+                                      _pi emmy.env/_pi
+                                      state__GT_t emmy.env/state__GT_t
+                                      symbol cljs.core/symbol
+                                      _SLASH_ emmy.env/_SLASH_
+                                      _STAR_ emmy.env/_STAR_
+                                      _ emmy.env/_
+                                      _PLUS_ emmy.env/_PLUS_
+                                      D emmy.env/D
+                                      __GT_infix emmy.env/__GT_infix
+                                      simplify emmy.env/simplify
                                       expt emmy.env/expt
                                       sin emmy.env/sin
-                                      D emmy.env/D
-                                      esymbol cljs.core/symbol}}}
+                                      cos emmy.env/cos
+                                      velocity emmy.env/velocity
+                                      dot_product emmy.env/dot_product
+                                      up emmy.env/up
+                                      Gamma emmy.env/Gamma
+                                      compose emmy.env/compose
+                                      definite_integral emmy.env/definite_integral
+                                      coordinate emmy.env/coordinate
+                                      minimize emmy.env/minimize
+                                      square emmy.env/square
+                                      partial emmy.env/partial
+                                      ref emmy.env/ref
+                                      sqrt emmy.env/sqrt
+                                      atan emmy.env/atan
+                                      down emmy.env/down
+                                      solve_linear_left emmy.env/solve_linear_left
+                                      state_advancer emmy.env/state_advancer
+                                      cross_product emmy.env/cross_product
+                                      Rx emmy.env/Rx
+                                      Ry emmy.env/Ry
+                                      Rz emmy.env/Rz
+                                      osculating_path emmy.env/osculating_path
+                                      momentum emmy.env/momentum
+                                      literal_function emmy.abstract.function/literal_function
+                                      multidimensional_minimize emmy.numerical.minimize/multidimensional_minimize
+                                      linear_interpolants emmy.mechanics.lagrange/linear_interpolants
+                                      make_path emmy.mechanics.lagrange/make_path
+                                      count cljs.core/count}}}
            :output-dir "out"
            :target :esm}}}

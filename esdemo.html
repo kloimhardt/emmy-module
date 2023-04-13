@@ -25,48 +25,1097 @@
     <script>setKlipseUrl("https://storage.googleapis.com/app.klipse.tech/plugin_prod/js/klipse_plugin.min.js");</script>
 
     <script type="module">
-     import {eminus, emul, ediv, expt, sin, D, esymbol }
-     from "./out/main.js";
-     var counter = 0;
-     let f = emul(3, expt.call(null, sin, 2));
-     let x = esymbol("x");
-     console.log(f.call(null,x).toString());
-     console.log('done1')
-    </script>
-
-    <script type="module">
-     import * as emmy from "./out/main.js";
-     window.minu = emmy.eminus;
-     console.log('done2')
-    </script>
-
-    <script type="module">
      import * as emmy from "./out/main.js";
      var requireEmmy = (name) => {
          window[name] = emmy[name];
          return name;
      };
+
+     var requireEmmyRename = (name, newname) => {
+         window[newname] = emmy[name];
+         return name;
+     };
+
      window.requireEmmy = requireEmmy;
+     window.requireEmmyRename = requireEmmyRename;
+
      console.log('done3')
     </script>
 
   </head>
 
   <body onload = "loadKlipse();">
-      <h2>
-          Sicmutils is a JavaScript library
-      </h2>
-      <p>
-          Press the button below to run the SICM demo calculations youself, in JavaScript, that is:
-      </p>
+      <h1>
+          Emmy as a JavaScript module
+      </h1>
+
+      <h1>Some Code Snippets</h1>
 
       <pre id="one-2-3"><code class="language-klipse-eval-js">
-       console.log("hucksi");
-       console.log(eval("minu(3,4)"));
-       console.log(window.minu(3,4));
-       requireEmmy("eminus")
-       eminus(7,11);
+1 + 2 + 3;
       </code></pre>
+
+      <pre id="klipse-scheme"><code class="language-klipse-scheme">
+#t
+      </code></pre>
+
+      <h1>The Scheme Syntax Transpiler</h1>
+
+    <pre id="scheme160"><code class="language-klipse-eval-js">
+["pi", "_pi", "state__GT_t", "symbol"].map(requireEmmy);
+
+var _COLON_pi = pi;
+var __COLON_pi = _pi;
+
+var specialchars =
+[["_SYMBOL_$1", /\'(\w+)/g],
+["$1_DOT_$2", /(\d+)\.(\d+)/g],
+["__COLON_$1", /\-:(\w+)/g],
+["_COLON_$1", /:(\w+)/g],
+["$1__GT_$2", /(\w+)->(\w+)/g],
+["$1_GT__$2", /(\w+)<-(\w+)/g], //part3 added
+[" state__GT_t ", /(\s+)time(\s+)/g],
+["[ / -$1 $2 ],", /-(\w+)\/(\d+)/g],
+["[ / $1 $2 ],", /(\w+)\/(\d+)/g]];
+
+var mathfns =
+[["_SLASH_", /\//g],
+["_STAR_", /\*/g],
+["_", /\-/g],
+["_PLUS_", /\+/g],
+["expt", /\^/g]];
+
+mathfns.map(x=> x[0]).map(requireEmmy);
+
+var replaceMath = (txt) =>
+specialchars.concat(mathfns)
+.reduce((s,r) => s.replace(r[1],r[0]), txt);
+
+var swapFirst = (j) =>
+j.constructor == Array && mathfns.map(x=> x[0]).includes(j[1])
+? [j[1], j[0]].concat(j.slice(2)).map(swapFirst)
+: j.constructor == Array
+? j.map(swapFirst)
+: j;
+
+var insertCommas = (txt) =>
+txt.replace(/(\w+)/g,'"$1",')
+.replace(/\,(\s+)\]/g," ]");
+
+var makeBrackets = (txt) =>
+txt.trim()
+.replace(/\(/g,"[ ")
+.replace(/\)/g," ],")
+.replace(/,$/,"");
+
+var textToJson = (txt) =>
+insertCommas(replaceMath(makeBrackets(txt)));
+
+requireEmmyRename("D","drv");
+
+var specialchars_2 =
+    [["_SYMBOL_$1^$2", /_SYMBOL_(\w+)expt(\w+)/],
+     ["$1.$2", /(\d+)_DOT_(\d+)/g],
+     ["-$1", /_(\d+)/g]];
+
+var replaceD = (j) =>
+j.constructor == String && j == "D"
+? "drv"
+: j.constructor == String
+? specialchars_2.reduce((s,r) => s.replace(r[1],r[0]), j)
+: j.constructor == Array
+? j.map(replaceD)
+: j;
+
+["__GT_infix", "simplify"].map(requireEmmy);
+
+var preAmble = (j) =>
+j[0] != "define"
+? ["__GT_infix", ["simplify", j]]
+: j;
+
+var identity = x => x;
+
+var edgeCases = (j) =>
+j[0] === "define"
+&& j[2].constructor == Array && j[2][0] === "let"
+&& j[1].constructor == String
+? ["identity", "'let not allowed in variable definition'"]
+: j;
+
+var letFlat2 = (j) =>
+j[0] === "let"
+? j[1].concat(letFlat2(j[2]))
+: [j];
+
+var constructLet = (j) =>
+["let", j.slice(0, j.length - 1), j[j.length - 1]];
+
+var letFlat = (j) =>
+j.constructor == Array && j[0] === "let"
+? constructLet(letFlat2(j))
+: j.constructor == Array
+? j.map(letFlat)
+: j;
+
+var modifyJson = (j) => preAmble(edgeCases(letFlat(replaceD(swapFirst(j)))));
+
+var makeFun = (j, callBack) =>
+"var " + j[1][0] + " = (" + j[1].slice(1) + ") => "
++ callBack(j[2]) +";";
+
+var makeFunFun = (j, callBack) =>
+"var " + j[1][0][0] + " = (" + j[1][0].slice(1) + ") => "
++ "(" + j[1].slice(1) +") => " + callBack(j[2]) + ";";
+
+var smap = (f, v) =>
+v.length === 1
+? f(v[0]) +";"
+: f(v[0]) +"; "  + smap(f, v.slice(1));
+
+var makeLet = (j, callBack) =>
+"{" + smap((l) => "let " + l[0] + " = " + callBack(l[1]), j[1])
+    + " return " +  callBack(j[2]) + "; }";
+
+var jsonToJs = (j) =>
+j.constructor == Array && j[0] === "let"
+? makeLet(j, jsonToJs)
+:j.constructor == Array && j[0] === "define"
+&& j[1].constructor == Array
+&& j[1][0].constructor == Array
+? makeFunFun(j, jsonToJs)
+:j.constructor == Array && j[0] === "define"
+&& j[1].constructor == Array
+? makeFun(j, jsonToJs)
+: j.constructor == Array && j[0] === "lambda"
+? "(" + j[1] + ") => " + jsonToJs(j[2]) + ";"
+:j.constructor == Array && j[0] === "define"
+&& j[1].constructor == String
+? "var " + j[1] + " = " + jsonToJs(j[2]) + ";"
+:j.constructor == String && j.substring(0, 8) == "_SYMBOL_"
+? 'symbol("' + j.substring(8, j.length) + '")'
+:j.constructor == Array
+? jsonToJs(j[0]) + ".call(null,"  +  j.slice(1).map(jsonToJs) + ")"
+: j;
+
+var expressionToJs = (expr) =>
+jsonToJs(modifyJson(JSON.parse(textToJson(expr)))) + ";";
+
+["sin", "cos", "velocity", "dot_product",
+"up", "Gamma", "compose", "definite_integral",
+"coordinate", "minimize", "square", "partial",
+"ref", "sqrt", "atan", "down", "solve_linear_left",
+"state_advancer", "cross_product", "Rx", "Ry", "Rz",
+"osculating_path", "momentum", "literal_function",
+"multidimensional_minimize", "linear_interpolants",
+"make_path", "count"].map(requireEmmy);
+
+var show_expression = identity;
+var velocities = velocity;
+var coordinates = coordinate;
+var vector_length = count; null;
+    </code></pre>
+
+    <script id="compiler_config_patchEvalOnce">
+     var oldEval = window.eval;
+     var newEval = (txt) =>
+         txt.substr(0, 2) === ";("
+         ? "Transpiled JS: " + expressionToJs(txt.substr(1))
+         : txt[0] === "(" && txt[txt.length - 1] != " "
+         ? "AST: " + textToJson(txt)
+         : txt[0] === "("
+         ? oldEval(expressionToJs(txt))
+         : txt[txt.length - 1] != ";"
+         ? "Add ; to JS: " + txt
+         : oldEval(txt);
+     window.eval = newEval;
+    </script>
+    <h1>Warm up</h1>
+
+    <pre id="prefix-123"><code class="language-klipse-eval-js">
+(+ 1 2 3) 
+    </code></pre>
+
+    <pre id="cos-pi"><code class="language-klipse-eval-js">
+(cos :pi) 
+    </code></pre>
+
+    <pre id="polar2d"><code class="language-klipse-eval-js">
+(up (* 'R (cos 'phi))
+    (* 'R (sin 'phi))) 
+    </code></pre>
+
+    <h1>1 Lagrangian Mechanics</h1>
+
+    <h2>1.4   Computing Actions</h2>
+
+    <pre><code class="language-klipse-eval-js">
+(define ((L-free-particle mass) local)
+(let ((v (velocity local)))
+(* 1/2 mass (dot-product v v)))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(define q
+ (up (literal-function 'x)
+ (literal-function 'y)
+ (literal-function 'z))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+((Gamma q) 't) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+((compose (L-free-particle 'm) (Gamma q)) 't) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(define (Lagrangian-action L q t1 t2)
+  (definite-integral (compose L (Gamma q)) t1 t2)) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(define (test-path t)
+  (up (+ (* 4 t) 7)
+      (+ (* 3 t) 5)
+      (+ (* 2 t) 1))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(Lagrangian-action (L-free-particle 3.0)
+                   test-path 0.0 10.0) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(define ((make-eta nu t1 t2) t)
+(* (- t t1) (- t t2) (nu t))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(define ((varied-free-particle-action mass q nu t1 t2) eps)
+  (let ((eta (make-eta nu t1 t2)))
+    (Lagrangian-action (L-free-particle mass)
+                       (+ q (* eps eta))
+                       t1
+                       t2))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+((varied-free-particle-action 3.0 test-path
+                              (up sin cos square)
+                              0.0 10.0)
+ 0.001) 
+    </code></pre>
+
+    <p>Calculation takes a few seconds. Add a blank at the end to start.</p>
+
+    <pre><code class="language-klipse-eval-js">
+(minimize 
+  (varied-free-particle-action 3.0 test-path
+   (up sin cos square)
+    0.0 10.0)
+  -2.0 1.0)
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(define ((parametric-path-action Lagrangian t0 q0 t1 q1) qs)
+  (let ((path (make-path t0 q0 t1 q1 qs)))
+    (Lagrangian-action Lagrangian path t0 t1))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(define (find-path Lagrangian t0 q0 t1 q1 n)
+  (let ((initial-qs (linear-interpolants q0 q1 n)))
+    (let ((minimizing-qs
+            (multidimensional-minimize
+              (parametric-path-action Lagrangian t0 q0 t1 q1)
+              initial-qs)))
+      (make-path t0 q0 t1 q1 minimizing-qs)))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(define ((L-harmonic m k) local)
+  (let ((q (coordinate local))
+        (v (velocity local)))
+    (- (* 1/2 m (square v)) (* 1/2 k (square q))))) 
+    </code></pre>
+
+    <p> Calculation takes a few seconds, add a blank at the and to start.</p>
+
+    <pre><code class="language-klipse-eval-js">
+(define q-harmonic 
+  (find-path (L-harmonic 1.0 1.0) 0.0 1.0 :pi/2 0.0 3))
+    </code></pre>
+
+    <p> Add a blank at the and to start</p>
+
+    <pre><code class="language-klipse-eval-js">
+(- (cos 0.8) (q-harmonic 0.8))
+    </code></pre> 
+
+    <h2>
+        1.5   The Euler–Lagrange Equations
+    </h2>
+    <h3>
+        1.5.2 Computing Lagrange's Equations
+    </h3>
+
+    <pre id="define-L-equations"><code class="language-klipse-eval-js">
+(define ((Lagrange-equations Lagrangian) q)
+  (- (D (compose ((partial 2) Lagrangian) (Gamma q)))
+     (compose ((partial 1) Lagrangian) (Gamma q)))) 
+    </code></pre>
+
+    <p>
+        Here I had to rename <code>test-path</code> to <code>general-test-path</code> to avoid, in chapter 1.4, conflict with the minimize procedure there.
+    </p>
+
+    <pre><code class="language-klipse-eval-js">
+(define (general-test-path t)
+  (up (+ (* 'a t) 'a0)
+      (+ (* 'b t) 'b0)
+      (+ (* 'c t) 'c0))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(((Lagrange-equations (L-free-particle 'm))
+  general-test-path)
+ 't) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(show-expression
+  (((Lagrange-equations (L-free-particle 'm))
+    (literal-function 'x))
+   't)) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(define (proposed-solution t)
+  (* 'A (cos (+ (* 'omega t) 'phi)))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(show-expression
+  (((Lagrange-equations (L-harmonic 'm 'k))
+    proposed-solution)
+   't)) 
+    </code></pre>
+
+    <h4>
+        Exercise 1.11: Kepler's third law
+    </h4>
+
+    <p>
+        Show that a planet in circular orbit satisfies Kepler's third law 
+        n^2a^3=G(M_1 + m_2), where n is the angular frequency of the orbit and a
+        is the distance between sun and planet. (Hint: use the reduced mass to construct the Lagrangian)
+    </p>
+
+    <pre><code class="language-klipse-eval-js">
+(define ((L-Kepler-central-polar m V) local)
+  (let ((q (coordinate local))
+        (qdot (velocity local)))
+    (let ((r (ref q 0))     (phi (ref q 1))
+                            (rdot (ref qdot 0)) (phidot (ref qdot 1)))
+      (- (* 1/2 m
+            (+ (square rdot) (square (* r phidot))) )
+         (V r))))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(define ((gravitational-energy G m1 m2) r)
+  (- (/ (* G m1 m2) r))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(define (circle t)
+  (up 'a (* 'n t))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(define lagrangian-reduced
+(L-Kepler-central-polar (/ (* 'M_1 'm_2) (+ 'M_1 'm_2))
+(gravitational-energy 'G 'M_1 'm_2))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(((Lagrange-equations lagrangian-reduced) circle) 't) 
+    </code></pre>
+
+    <h2>
+        1.6 How to find Lagrangians
+    </h2>
+
+    <pre><code class="language-klipse-eval-js">
+(define ((L-uniform-acceleration m g) local)
+  (let ((q (coordinate local))
+        (v (velocity local)))
+    (let ((y (ref q 1)))
+      (- (* 1/2 m (square v)) (* m g y))))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(show-expression
+  (((Lagrange-equations
+      (L-uniform-acceleration 'm 'g))
+    (up (literal-function 'x)
+        (literal-function 'y)))
+   't)) 
+    </code></pre>
+
+    <pre id="define-L-central-rectangular"><code class="language-klipse-eval-js">
+(define ((L-central-rectangular m U) local)
+  (let ((q (coordinate local))
+        (v (velocity local)))
+    (- (* 1/2 m (square v))
+       (U (sqrt (square q)))))) 
+    </code></pre>
+
+    <p>
+        <code>show-expression can actually be omitted, our little Scheme syntax compiler does that anyway.</code>
+    </p>
+
+    <pre id="calc-L-eqs-central-rect"><code class="language-klipse-eval-js">
+  (((Lagrange-equations
+      (L-central-rectangular 'm (literal-function 'U)))
+    (up (literal-function 'x)
+        (literal-function 'y)))
+   't) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(show-expression
+  (((Lagrange-equations
+      (L-Kepler-central-polar 'm (literal-function 'U)))
+    (up (literal-function 'r)
+        (literal-function 'phi)))
+   't)) 
+    </code></pre>
+
+    <h3>1.6.1 Coordinate Transformations</h3>
+
+    <pre><code class="language-klipse-eval-js">
+(define ((F->C F) local)
+  (up (time local)
+      (F local)
+      (+ (((partial 0) F) local)
+         (* (((partial 1) F) local)
+            (velocity local))))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(define (p->r local)
+  (let ((polar-tuple (coordinate local)))
+    (let ((r (ref polar-tuple 0))
+          (phi (ref polar-tuple 1)))
+      (let ((x (* r (cos phi)))
+            (y (* r (sin phi))))
+        (up x y))))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(show-expression
+  (velocity
+    ((F->C p->r)
+     (up 't (up 'r 'phi) (up 'rdot 'phidot))))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(define (L-central-polar m U)
+  (compose (L-central-rectangular m U) (F->C p->r))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(show-expression
+  ((L-central-polar 'm (literal-function 'U))
+   (up 't (up 'r 'phi) (up 'rdot 'phidot)))) 
+    </code></pre>
+
+    <h4>Coriolis and centrifugal forces</h4>
+
+    <pre><code class="language-klipse-eval-js">
+(define ((L-free-rectangular m) local)
+  (let ((vx (ref (velocities local) 0))
+        (vy (ref (velocities local) 1)))
+    (* 1/2 m (+ (square vx) (square vy))))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(define (L-free-polar m)
+  (compose (L-free-rectangular m) (F->C p->r))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(define ((F Omega) local)
+  (let ((t (time local))
+        (r (ref (coordinates local) 0))
+        (theta (ref (coordinates local) 1)))
+    (up r (+ theta (* Omega t))))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(define (L-rotating-polar m Omega)
+  (compose (L-free-polar m) (F->C (F Omega)))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(define (L-rotating-rectangular m Omega)
+  (compose (L-rotating-polar m Omega) (F->C r->p))) 
+    </code></pre>
+
+    <p><code>r->p</code> added</p>
+
+    <pre><code class="language-klipse-eval-js">
+(define (r->p local)
+  (let ((rect-tuple (coordinate local)))
+    (let ((x (ref rect-tuple 0))
+          (y (ref rect-tuple 1)))
+       (let ((r (sqrt (square rect-tuple)))
+             (phi (atan (/ y x))))
+         (up r phi))))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+((L-rotating-rectangular 'm 'Omega)
+(up 't (up 'x_r 'y_r) (up 'xdot_r 'ydot_r))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(+ (* 1/2 (expt 'Omega 2) 'm (expt 'x_r 2))
+(* 1/2 (expt 'Omega 2) 'm (expt 'y_r 2))
+(* -1 'Omega 'm 'xdot_r 'y_r)
+(* 'Omega 'm 'ydot_r 'x_r)
+(* 1/2 'm (expt 'xdot_r 2))
+(* 1/2 'm (expt 'ydot_r 2))) 
+    </code></pre>
+
+    <p><code>x_r, y_r</code>: underscore added. Calculation takes a few seconds,
+    add a blank at the and to start</p>
+
+    <pre><code class="language-klipse-eval-js">
+(((Lagrange-equations (L-rotating-rectangular 'm 'Omega))
+  (up (literal-function 'x_r) (literal-function 'y_r)))
+ 't)
+    </code></pre>
+
+    <p>definitions x_r y_r added</p>
+
+    <pre><code class="language-klipse-eval-js">
+(define x_r (literal-function 'x_r)) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(define y_r (literal-function 'y_r)) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(down
+(+ (* -1 (expt 'Omega 2) 'm (x_r 't))
+(* -2 'Omega 'm ((D y_r) 't))
+(* 'm (((expt D 2) x_r) 't)))
+(+ (* -1 (expt 'Omega 2) 'm (y_r 't))
+(* 2 'Omega 'm ((D x_r) 't))
+(* 'm (((expt D 2) y_r) 't)))) 
+    </code></pre>
+
+    <h3>1.6.2 Systems with Rigid Constraints</h3>
+    <h4>A pendulum driven at the pivot</h4>
+
+    <p>See <a href="https://kloimhardt.github.io/cljtiles.html?page=116">here</a> for a presentation of the Driven Pendulum using visual programming</p>
+
+    <pre><code class="language-klipse-eval-js">
+(define ((T-pend m l g ys) local)
+(let ((t (time local))
+(theta (coordinate local))
+(thetadot (velocity local)))
+(let ((vys (D ys)))
+(* 1/2 m
+(+ (square (* l thetadot))
+(square (vys t))
+(* 2 l (vys t) thetadot (sin theta))))))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(define ((V-pend m l g ys) local)
+(let ((t (time local))
+      (theta (coordinate local)))
+  (* m g (- (ys t) (* l (cos theta)))))) 
+    </code></pre>
+
+    <p> Because used later, rename <code>L-pend</code> to <code>L-pendulum</code>
+    <pre><code class="language-klipse-eval-js">
+(define L-pendulum (- T-pend V-pend)) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(show-expression
+(((Lagrange-equations
+(L-pendulum 'm 'l 'g (literal-function 'y_s)))
+(literal-function 'theta))
+'t)) 
+    </code></pre>
+
+    <h3>
+        1.6.3 Constraints as Coordinate Transformations
+    </h3>
+
+    <p> <code>L-uniform-acceleration</code> already defined above </p>
+
+    <pre><code class="language-klipse-eval-js">
+(define ((L-uniform-acceleration m g) local)
+  (let ((q (coordinate local))
+        (v (velocity local)))
+     (let ((y (ref q 1)))
+       (- (* 1/2 m (square v)) (* m g y))))) ;;execution not necessary
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(define ((dp-coordinates l y_s) local)
+(let ((t (time local))
+(theta (coordinate local)))
+(let ((x (* l (sin theta)))
+(y (- (y_s t) (* l (cos theta)))))
+(up x y)))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(define (L-pend m l g y_s)
+(compose (L-uniform-acceleration m g)
+(F->C (dp-coordinates l y_s)))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(show-expression
+((L-pend 'm 'l 'g (literal-function 'y_s))
+(up 't 'theta 'thetadot))) 
+    </code></pre>
+
+    <h3>1.7   Evolution of Dynamical State</h3>
+
+    <pre><code class="language-klipse-eval-js">
+(define (Lagrangian->acceleration L)
+(let ((P ((partial 2) L)) (F ((partial 1) L)))
+(solve-linear-left
+((partial 2) P)
+(- F
+(+ ((partial 0) P)
+(* ((partial 1) P) velocity)))))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(define (Lagrangian->state-derivative L)
+(let ((acceleration (Lagrangian->acceleration L)))
+(lambda (state)
+(up 1
+(velocity state)
+(acceleration state))))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(define (harmonic-state-derivative m k)
+(Lagrangian->state-derivative (L-harmonic m k))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+((harmonic-state-derivative 'm 'k)
+(up 't (up 'x 'y) (up 'v_x 'v_y))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(up 1 (up 'v_x 'v_y) (up (/ (* -1 'k 'x) 'm) (/ (* -1 'k 'y) 'm))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(define ((Lagrange-equations-first-order L) q v)
+  (let ((state-path (qv->state-path q v)))
+    (- (D state-path)
+       (compose (Lagrangian->state-derivative L)
+                state-path)))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(define ((qv->state-path q v) t)
+  (up t (q t) (v t))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(show-expression
+ (((Lagrange-equations-first-order (L-harmonic 'm 'k))
+   (up (literal-function 'x)
+       (literal-function 'y))
+   (up (literal-function 'v_x)
+       (literal-function 'v_y)))
+  't)) 
+    </code></pre>
+
+    <h4>Numerical integration</h4>
+
+    <pre><code class="language-klipse-eval-js">
+((state-advancer harmonic-state-derivative 2.0 1.0)
+(up 1.0 (up 1.0 2.0) (up 3.0 4.0))
+10.0
+1.0e-12)
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(up 11.0
+    (up 3.7127916645844437 5.420620823651583)
+    (up 1.6148030925459782 1.8189103724750855)) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(define ((periodic-drive amplitude frequency phase) t)
+(* amplitude (cos (+ (* frequency t) phase)))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(define (L-periodically-driven-pendulum m l g A omega)
+(let ((ys (periodic-drive A omega 0)))
+(L-pend m l g ys))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(show-expression
+(((Lagrange-equations
+(L-periodically-driven-pendulum 'm 'l 'g 'A 'omega))
+(literal-function 'theta))
+'t)) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(define (pend-state-derivative m l g A omega)
+(Lagrangian->state-derivative
+(L-periodically-driven-pendulum m l g A omega))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(show-expression
+((pend-state-derivative 'm 'l 'g 'A 'omega)
+(up 't 'theta 'thetadot))) 
+    </code></pre>
+
+    <h2>1.8 Conserved Quantities</h2>
+    <h3>1.8.2 Energy Conservation</h3>
+
+    <pre><code class="language-klipse-eval-js">
+(define (Lagrangian->energy L)
+(let ((P ((partial 2) L)))
+(- (* P velocity) L))) 
+    </code></pre>
+
+    <h3>1.8.3 Central Forces in Three Dimensions</h3>
+
+    <pre><code class="language-klipse-eval-js">
+(define ((T3-spherical m) state)
+(let ((q (coordinate state))
+(qdot (velocity state)))
+(let ((r (ref q 0))
+(theta (ref q 1))
+(rdot (ref qdot 0))
+(thetadot (ref qdot 1))
+(phidot (ref qdot 2)))
+(* 1/2 m
+(+ (square rdot)
+(square (* r thetadot))
+(square (* r (sin theta) phidot))))))) 
+    </code></pre>
+
+    <p>Change the second define into a let</p>
+
+    <pre><code class="language-klipse-eval-js">
+(define (L3-central m Vr)
+  (let ((Vs (lambda (state)
+               (let ((r (ref (coordinate state) 0)))
+                 (Vr r)))))
+     (- (T3-spherical m) Vs))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(show-expression
+(((partial 1) (L3-central 'm (literal-function 'V)))
+(up 't
+(up 'r 'theta 'phi)
+(up 'rdot 'thetadot 'phidot)))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(show-expression
+(((partial 2) (L3-central 'm (literal-function 'V)))
+(up 't
+(up 'r 'theta 'phi)
+(up 'rdot 'thetadot 'phidot)))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(define ((ang-mom-z m) rectangular-state)
+(let ((xyz (coordinate rectangular-state))
+(v (velocity rectangular-state)))
+(ref (cross-product xyz (* m v)) 2))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(define (s->r spherical-state)
+(let ((q (coordinate spherical-state)))
+(let ((r (ref q 0))
+(theta (ref q 1))
+(phi (ref q 2)))
+(let ((x (* r (sin theta) (cos phi)))
+(y (* r (sin theta) (sin phi)))
+(z (* r (cos theta))))
+(up x y z))))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(show-expression
+((compose (ang-mom-z 'm) (F->C s->r))
+(up 't
+(up 'r 'theta 'phi)
+(up 'rdot 'thetadot 'phidot)))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(show-expression
+((Lagrangian->energy (L3-central 'm (literal-function 'V)))
+(up 't
+(up 'r 'theta 'phi)
+(up 'rdot 'thetadot 'phidot)))) 
+    </code></pre>
+
+    <h3>1.8.4 The Restricted Three-Body Problem</h3>
+
+    <pre><code class="language-klipse-eval-js">
+(define ((L0 m V) local)
+(let ((t (time local))
+(q (coordinates local))
+(v (velocities local)))
+(- (* 1/2 m (square v)) (V t q)))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(define ((V a GM0 GM1 m) t xy)
+(let ((Omega (sqrt (/ (+ GM0 GM1) (expt a 3))))
+(a0 (* (/ GM1 (+ GM0 GM1)) a))
+(a1 (* (/ GM0 (+ GM0 GM1)) a)))
+(let ((x (ref xy 0)) (y (ref xy 1))
+(x0 (* -1 a0 (cos (* Omega t))))
+(y0 (* -1 a0 (sin (* Omega t))))
+(x1 (* +1 a1 (cos (* Omega t))))
+(y1 (* +1 a1 (sin (* Omega t)))))
+(let ((r0
+(sqrt (+ (square (- x x0)) (square (- y y0)))))
+(r1
+(sqrt (+ (square (- x x1)) (square (- y y1))))))
+(- (+ (/ (* GM0 m) r0) (/ (* GM1 m) r1))))))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(define ((LR3B m a GM0 GM1) local)
+(let ((q (coordinates local))
+(qdot (velocities local))
+(Omega (sqrt (/ (+ GM0 GM1) (expt a 3))))
+(a0 (* (/ GM1 (+ GM0 GM1)) a))
+(a1 (* (/ GM0 (+ GM0 GM1)) a)))
+(let ((x (ref q 0))     (y (ref q 1))
+(xdot (ref qdot 0)) (ydot (ref qdot 1)))
+(let ((r0 (sqrt (+ (square (+ x a0)) (square y))))
+(r1 (sqrt (+ (square (- x a1)) (square y)))))
+(+ (* 1/2 m (square qdot))
+(* 1/2 m (square Omega) (square q))
+(* m Omega (- (* x ydot) (* xdot y)))
+(/ (* GM0 m) r0) (/ (* GM1 m) r1)))))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(define ((LR3B1 m a0 a1 Omega GM0 GM1) local)
+(let ((q (coordinates local))
+(qdot (velocities local)))
+(let ((x (ref q 0))     (y (ref q 1))
+(xdot (ref qdot 0)) (ydot (ref qdot 1)))
+(let ((r0 (sqrt (+ (square (+ x a0)) (square y))))
+(r1 (sqrt (+ (square (- x a1)) (square y)))))
+(+ (* 1/2 m (square qdot))
+(* 1/2 m (square Omega) (square q))
+(* m Omega (- (* x ydot) (* xdot y)))
+(/ (* GM0 m) r0) (/ (* GM1 m) r1)))))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+((Lagrangian->energy (LR3B1 'm 'a_0 'a_1 'Omega 'GM_0 'GM_1))
+(up 't (up 'x_r 'y_r) (up 'v_r^x 'v_r^y)))
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(+ (* 1/2 'm (expt 'v_r^x 2))
+(* 1/2 'm (expt 'v_r^y 2))
+(/ (* -1 'GM_0 'm)
+(sqrt (+ (expt (+ 'x_r 'a_0) 2) (expt 'y_r 2))))
+(/ (* -1 'GM_1 'm)
+(sqrt (+ (expt (- 'x_r 'a_1) 2) (expt 'y_r 2))))
+(* -1/2 'm (expt 'Omega 2) (expt 'x_r 2))
+(* -1/2 'm (expt 'Omega 2) (expt 'y_r 2)))
+    </code></pre>
+
+    <h3>1.8.5 Noether’s Theorem</h3>
+
+    <pre><code class="language-klipse-eval-js">
+(define (F-tilde angle-x angle-y angle-z)
+(compose (Rx angle-x) (Ry angle-y) (Rz angle-z) coordinate)) 
+    </code></pre>
+
+    <p>
+        L-central-rectangular is already defined in chapter 1.6
+    </p>
+
+    <pre><code class="language-klipse-eval-js">
+(define ((L-central-rectangular m U) state)
+  (let ((q (coordinate state))
+        (v (velocity state)))
+    (- (* 1/2 m (square v))
+       (U (sqrt (square q)))))) ;;execution not needed
+    </code></pre>
+
+    <p>
+        A <code>let</code> within a variable definition is not allowed
+        in our little Scheme compiler,
+    </p>
+
+    <pre><code class="language-klipse-eval-js">
+(define the-Noether-integral
+  (let ((L (L-central-rectangular
+              'm (literal-function 'U))))
+     (* ((partial 2) L) ((D F-tilde) 0 0 0)))) 
+    </code></pre>
+
+    <p>
+        ... so we split in two expressions.
+    </p>
+
+    <pre><code class="language-klipse-eval-js">
+(define let-L (L-central-rectangular
+              'm (literal-function 'U))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(define the-Noether-integral
+  (* ((partial 2) let-L) ((D F-tilde) 0 0 0))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(the-Noether-integral
+(up 't
+(up 'x 'y 'z)
+(up 'vx 'vy 'vz))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(down (+ (* 'm 'vy 'z) (* -1 'm 'vz 'y))
+(+ (* 'm 'vz 'x) (* -1 'm 'vx 'z))
+(+ (* 'm 'vx 'y) (* -1 'm 'vy 'x))) 
+    </code></pre>
+
+    <h2>1.9   Abstraction of Path Functions</h2>
+
+    <pre><code class="language-klipse-eval-js">
+(define ((Gamma-bar f-bar) local)
+((f-bar (osculating-path local)) (time local))) 
+    </code></pre>
+
+    <p>
+        <code>define</code> withing <code>define</code> is not allowed in
+        our little Scheme compiler ...
+    </p>
+
+
+    <pre><code class="language-klipse-eval-js">
+(define (F->C1 F)
+(define (C local)
+(let ((n (vector-length local)))
+(define (f-bar q-prime)
+(define q
+(compose F (Gamma q-prime)))
+(Gamma q n))
+((Gamma-bar f-bar) local)))
+C) ;;do not execute
+    </code></pre>
+
+    <p>
+        ... so we use <code>let</code>. Moreover, <code>F->C</code> is already defined in chapter 1.6.1, so we rename to <code>F->C1</code>
+    </p>
+
+    <pre><code class="language-klipse-eval-js">
+(define (F->C1 F)
+  (let ((C (lambda (local)
+    (let ((n (vector-length local)  )
+          (f-bar (lambda (q-prime)
+                   (let ((q (compose F (Gamma q-prime))  ))
+                     (Gamma q n)))))
+      ((Gamma-bar f-bar) local)))))
+    C)) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(show-expression
+((F->C1 p->r)
+(up 't (up 'r 'theta) (up 'rdot 'thetadot)))) 
+    </code></pre>
+
+    <p>
+        <code>define</code> withing <code>define</code> is not allowed in
+        our little Scheme compiler ...
+    </p>
+
+    <pre><code class="language-klipse-eval-js">
+(define (Dt F)
+(define (DtF state)
+(let ((n (vector-length state)))
+(define (DF-on-path q)
+(D (compose F (Gamma q (- n 1)))))
+((Gamma-bar DF-on-path) state)))
+DtF) ;;do not execute
+    </code></pre>
+
+<p>
+    ... so we use <code>let</code>
+</p>
+
+    <pre><code class="language-klipse-eval-js">
+(define (Dt F)
+  (let ((DtF (lambda (state)
+               (let ((n (vector-length state))
+                   (DF-on-path (lambda (q)
+                                 (D (compose F (Gamma q (- n 1)))))))
+                 ((Gamma-bar DF-on-path) state)))))
+    DtF)) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(define (Euler-Lagrange-operator L)
+(- (Dt ((partial 2) L)) ((partial 1) L))) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+((Euler-Lagrange-operator
+   (L-harmonic 'm 'k))
+     (up 't 'x 'v 'a)) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(+ (* 'a 'm) (* 'k 'x)) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+((compose
+(Euler-Lagrange-operator (L-harmonic 'm 'k))
+(Gamma (literal-function 'x) 4))
+'t) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+(+ (* 'k ((literal-function 'x) 't))
+   (* 'm (((expt D 2) (literal-function 'x)) 't))) 
+    </code></pre>
 
    </body>
 </html>
