@@ -4,6 +4,8 @@
            :compiler-options {:optimizations :simple
                               :output-wrapper false
                               :source-map false}
+           :devtools {:http-root "."
+                      :http-port 9000}
            :modules {:main {:exports {pi emmy.env/pi
                                       _pi emmy.env/_pi
                                       state__GT_t emmy.env/state__GT_t

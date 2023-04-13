@@ -21,8 +21,14 @@
      };
     </script>
 
-    <script src="https://kloimhardt.github.io/blog/js/blog_helper.js"></script>
-    <script>setKlipseUrl("https://storage.googleapis.com/app.klipse.tech/plugin_prod/js/klipse_plugin.min.js");</script>
+    <script id="loadKlipse">
+    function loadKlipse() {
+     var el = document.createElement('script');
+     el.src = "https://storage.googleapis.com/app.klipse.tech/plugin_prod/js/klipse_plugin.min.js";
+     el.type = 'text/javascript';
+     document.getElementsByTagName('head')[0].appendChild(el);
+    }
+    </script>
 
     <script type="module">
      import * as emmy from "./out/main.js";
@@ -39,6 +45,22 @@
      window.requireEmmy = requireEmmy;
      window.requireEmmyRename = requireEmmyRename;
     </script>
+
+    <script id="compiler_config_patchEvalOnce">
+     var oldEval = window.eval;
+     var newEval = (txt) =>
+         txt.substr(0, 2) === ";("
+         ? "Transpiled JS: " + expressionToJs(txt.substr(1))
+         : txt[0] === "(" && txt[txt.length - 1] != " "
+         ? "AST: " + textToJson(txt)
+         : txt[0] === "("
+         ? oldEval(expressionToJs(txt))
+         : txt[txt.length - 1] != ";"
+         ? "Add ; to JS: " + txt
+         : oldEval(txt);
+     window.eval = newEval;
+    </script>
+
   </head>
 
   <body onload = "loadKlipse();">
@@ -213,20 +235,6 @@ var coordinates = coordinate;
 var vector_length = count; null;
     </code></pre>
 
-    <script id="compiler_config_patchEvalOnce">
-     var oldEval = window.eval;
-     var newEval = (txt) =>
-         txt.substr(0, 2) === ";("
-         ? "Transpiled JS: " + expressionToJs(txt.substr(1))
-         : txt[0] === "(" && txt[txt.length - 1] != " "
-         ? "AST: " + textToJson(txt)
-         : txt[0] === "("
-         ? oldEval(expressionToJs(txt))
-         : txt[txt.length - 1] != ";"
-         ? "Add ; to JS: " + txt
-         : oldEval(txt);
-     window.eval = newEval;
-    </script>
     <h1>Warm up</h1>
 
     <pre id="prefix-123"><code class="language-klipse-eval-js">
