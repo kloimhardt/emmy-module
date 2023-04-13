@@ -6,10 +6,14 @@
                               :source-map false}
            :devtools {:http-root "."
                       :http-port 9000}
-           :modules {:main {:exports {pi emmy.env/pi
+           :modules {:main {:exports {symbol cljs.core/symbol
+                                      count cljs.core/count
+                                      clj__GT_js cljs.core/clj__GT_js
+                                      get cljs.core/get
+
+                                      pi emmy.env/pi
                                       _pi emmy.env/_pi
                                       state__GT_t emmy.env/state__GT_t
-                                      symbol cljs.core/symbol
                                       _SLASH_ emmy.env/_SLASH_
                                       _STAR_ emmy.env/_STAR_
                                       _ emmy.env/_
@@ -45,7 +49,6 @@
                                       literal_function emmy.abstract.function/literal_function
                                       multidimensional_minimize emmy.numerical.minimize/multidimensional_minimize
                                       linear_interpolants emmy.mechanics.lagrange/linear_interpolants
-                                      make_path emmy.mechanics.lagrange/make_path
-                                      count cljs.core/count}}}
+                                      make_path emmy.mechanics.lagrange/make_path}}}
            :output-dir "out"
            :target :esm}}}
