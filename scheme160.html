@@ -32,18 +32,10 @@
 
     <script type="module">
      import * as emmy from "./out/main.js";
-     var requireEmmy = (name) => {
-         window[name] = emmy[name];
-         return name;
-     };
-
-     var requireEmmyRename = (name, newname) => {
+     window.requireEmmyRename = (name, newname) =>
          window[newname] = emmy[name];
-         return name;
-     };
-
-     window.requireEmmy = requireEmmy;
-     window.requireEmmyRename = requireEmmyRename;
+     window.requireEmmy = (name) =>
+         window.requireEmmyRename(name, name);
     </script>
 
     <script id="compiler_config_patchEvalOnce">
