@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Sicmutils Js demo</title>
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta content="utf-8" http-equiv="encoding">
+
+    <link rel="stylesheet" type="text/css" href="https://storage.googleapis.com/app.klipse.tech/css/codemirror.css">
+    <style>
+     .CodeMirror { max-height: 150px; }
+    </style>
+
+    <script>
+     window.klipse_settings = {
+         selector_eval_js: '.language-klipse-eval-js',
+         selector_eval_scheme: '.language-klipse-scheme, .language-eval-scheme',
+         codemirror_options_in: {
+             mode: 'scheme'
+         }
+     };
+    </script>
+
+    <script src="https://kloimhardt.github.io/blog/js/blog_helper.js"></script>
+    <script>setKlipseUrl("https://storage.googleapis.com/app.klipse.tech/plugin_prod/js/klipse_plugin.min.js");</script>
+
+    <script type="module">
+     import {eminus, emul, ediv, expt, sin, D, esymbol }
+     from "./out/main.js";
+     var counter = 0;
+     let f = emul(3, expt.call(null, sin, 2));
+     let x = esymbol("x");
+     console.log(f.call(null,x).toString());
+     console.log('done1')
+    </script>
+
+    <script type="module">
+     import * as emmy from "./out/main.js";
+     window.minu = emmy.eminus;
+     console.log('done2')
+    </script>
+
+    <script type="module">
+     import * as emmy from "./out/main.js";
+     var requireEmmy = (name) => {
+         window[name] = emmy[name];
+         return name;
+     };
+     window.requireEmmy = requireEmmy;
+     console.log('done3')
+    </script>
+
+  </head>
+
+  <body onload = "loadKlipse();">
+      <h2>
+          Sicmutils is a JavaScript library
+      </h2>
+      <p>
+          Press the button below to run the SICM demo calculations youself, in JavaScript, that is:
+      </p>
+
+      <pre id="one-2-3"><code class="language-klipse-eval-js">
+       console.log("hucksi");
+       console.log(eval("minu(3,4)"));
+       console.log(window.minu(3,4));
+       requireEmmy("eminus")
+       eminus(7,11);
+      </code></pre>
+
+   </body>
+</html>

@@ -1,0 +1,15 @@
+{:deps true
+ :builds {:emmy-esm
+          {:asset-path "out"
+           :compiler-options {:optimizations :simple
+                              :output-wrapper false
+                              :source-map false}
+           :modules {:main {:exports {eminus emmy.env/-
+                                      emul emmy.env/*
+                                      ediv emmy.env//
+                                      expt emmy.env/expt
+                                      sin emmy.env/sin
+                                      D emmy.env/D
+                                      esymbol cljs.core/symbol}}}
+           :output-dir "out"
+           :target :esm}}}
