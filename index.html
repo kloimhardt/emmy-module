@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Emmy as a JavaScript module</title>
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta content="utf-8" http-equiv="encoding">
+
+    <link rel="stylesheet" type="text/css" href="https://storage.googleapis.com/app.klipse.tech/css/codemirror.css">
+
+    <script>
+     window.klipse_settings = {
+         selector_eval_js: '.language-klipse-eval-js',
+         selector_eval_scheme: '.language-klipse-scheme, .language-eval-scheme',
+         codemirror_options_in: {
+             mode: 'scheme'
+         }
+     };
+    </script>
+
+    <script id="loadKlipse">
+    function loadKlipse() {
+     var el = document.createElement('script');
+     el.src = "https://storage.googleapis.com/app.klipse.tech/plugin_prod/js/klipse_plugin.min.js";
+     el.type = 'text/javascript';
+     document.getElementsByTagName('head')[0].appendChild(el);
+    }
+    </script>
+
+    <script type="module">
+     import * as emmy from "./out/main.js";
+     window.requireEmmyRename = (name, newname) =>
+         window[newname] = emmy[name];
+     window.requireEmmy = (name) =>
+         window.requireEmmyRename(name, name);
+    </script>
+
+    <script id="compiler_config_patchEvalOnce">
+     var oldEval = window.eval;
+     var newEval = (txt) =>
+         txt.substr(0, 2) === ";("
+         ? "Transpiled JS: " + expressionToJs(txt.substr(1))
+         : txt[0] === "(" && txt[txt.length - 1] != " "
+         ? "AST: " + textToJson(txt)
+         : txt[0] === "("
+         ? oldEval(expressionToJs(txt))
+         : txt[txt.length - 1] != ";"
+         ? "Add ; to JS: " + txt
+         : oldEval(txt);
+     window.eval = newEval;
+    </script>
+
+  </head>
+
+  <body onload = "loadKlipse();">
+      <h1>
+          Emmy as a JavaScript module
+      </h1>
+    <pre><code class="language-klipse-eval-js">
+var insertCommas = (txt) =>
+txt.replace(/(\w+)/g,'"$1",')
+.replace(/\,\s+\]/g," ]");
+
+var makeBrackets = (txt) =>
+txt.trim()
+.replace(/\(/g,"[ ")
+.replace(/\)/g," ],")
+.replace(/,$/,"");
+
+var textToJson = (txt) =>
+insertCommas(makeBrackets(txt));
+
+var jsonToJs = (j) =>
+j.constructor == Array
+? jsonToJs(j[0]) + ".call(null,"  +  j.slice(1).map(jsonToJs) + ")"
+: j;
+
+var expressionToJs = (expr) =>
+jsonToJs(JSON.parse(textToJson(expr))) + ";";
+
+    </code></pre>
+
+    <p>
+Converting the Scheme syntax into a nested JavaScript array (the so called AST).
+    </p>
+
+    <pre><code class="language-klipse-eval-js">
+(up (cos 0) (sin 0))
+    </code></pre>
+
+    <p>Scheme syntax transpiled to Javascript</p>
+
+    <pre><code class="language-klipse-eval-js">
+;((up cos sin) 0)
+    </code></pre>
+
+    <p>
+Some JS imports
+    </p>
+
+    <pre><code class="language-klipse-eval-js">
+["up","cos","sin","square","compose"].map(requireEmmy);
+requireEmmyRename("D","drv");
+    </code></pre>
+
+    <p>Scheme syntax executed</p>
+
+    <pre><code class="language-klipse-eval-js">
+((up cos sin) 0) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+((up cos (compose cos sin)) 0) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+((drv square) 3) 
+    </code></pre>
+
+    <pre><code class="language-klipse-eval-js">
+((up
+(compose square sin)
+(drv (compose square sin))) 1) 
+    </code></pre>
+
+   </body>
+</html>

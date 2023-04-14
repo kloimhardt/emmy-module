@@ -6,9 +6,11 @@ To start a web server type:
 shadow-cljs watch emmy-esm
 ```
 
-then open in the browser: http://localhost:9000/scheme160.html
+then open in the browser: http://localhost:9000/index.html
 
 You can also produce the release version, but you need to start your own local web-server somehow:
 ```
 shadow-cljs release emmy-esm
 ```
+
+Chapter one of SICM is in scheme160.html
