@@ -1,6 +1,19 @@
 <!DOCTYPE html>
 <html>
-  <head>
+    <head>
+
+    <script>
+     function addmodule(text) {
+         var el = document.createElement('script');
+         el.innerHTML = text;
+         el.type = 'module';
+         document.getElementsByTagName('head')[0].appendChild(el);
+     }
+
+     var compilemodule = (compile_string, nodename) =>
+         addmodule(compile_string(document.getElementById(nodename).innerHTML));
+    </script>
+
     <script type="module">
      import {up, state_advancer, L_harmonic, Lagrangian__GT_state_derivative}
      from "./out/main.js";
@@ -28,14 +41,46 @@
          state_advancer.call(null,harmonic_state_derivative,2.0,1.0);
 
      try {
-         harmonic_state_advancer.call(null, up01, 10.0, 1.0e-12);
+         // harmonic_state_advancer.call(null, up01, 10.0, 1.0e-12);
      } catch (error) {
          document.body.append(error);
          // TypeError: Cannot mix BigInt and other types, use explicit conversions
      }
+
     </script>
 
   </head>
    <body>
+       <pre id="hu">console.log(7 + 8)</pre>
+
+       <pre id="ha">(.log js/console (+ 9 5))</pre>
+
+       <pre id="advancer">
+(req 3)
+
+(require '["./out/main.js" :as confetti])
+
+(defn f [x] (* 3 x))
+(.log js/console (f 22))
+
+(defn harmonic-state-derivative [m k]
+(A (L-harmonic m k)))
+
+(Lagrangian->state-derivative 1)
+       </pre>
+
+       <script>
+        let compile_string = x => "console.log('not implemented')"
+
+        addmodule("console.log(3 + 4)");
+        document.body.append(compile_string("(+ 1 2)"));
+        addmodule(document.getElementById("hu").innerHTML);
+
+        addmodule(compile_string(document.getElementById("ha").innerHTML));
+        compilemodule(compile_string, "ha");
+        compilemodule(compile_string, "advancer");
+        console.log(compile_string(document.getElementById("advancer").innerHTML));
+       </script>
+
    </body>
 </html>
