@@ -6,7 +6,7 @@ To build the Emmy module and start a web server, type (you need [Shadow-cljs](ht
 emmy-module$ shadow-cljs watch emmy-esm
 ```
 
-then open in the browser: http://localhost:9000/index.html
+then open in the browser: http://localhost:9000/index.html (there is also scheme160.html and barebones.html, see below)
 
 `index.html` shows how all the parts technically fit together. To gain further insight on what the shown examples mean, look at this [blog post](https://kloimhardt.github.io/blog/hamiltonmechanics/2023/03/20/up-compose.html).
 
@@ -38,3 +38,5 @@ emmy-module$ shadow-cljs release emmy-esm
 ```
 
 `scheme160.html` shows all examples of part one of the SICM book. For further explanations, look at the [same examples](https://kloimhardt.github.io/blog/html/sicmutils-as-js-book-part1.html) executed with Sicmutils, the predecessor of Emmy. Note that in this older version, Sicmutils is not a JavaScript module but a simple script.
+
+`barebones.html` tests the state-advancer function of Emmy.

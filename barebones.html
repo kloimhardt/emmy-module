@@ -7,25 +7,31 @@
 
      // (defn harmonic-state-derivative [m k]
      //   (Lagrangian->state-derivative (L-harmonic m k)))
+     //
+     // (def up01 (up 1.0 (up 1.0 2.0) (up 3.0 4.0)))
+     //
+     // (def harmonic-state_advancer
+     //   (state_advancer harmonic-state-derivative 2.0 1.0))
+     //
+     // (harmonic-state-advancer up01, 10.0, 1.0e-12)
+
      let harmonic_state_derivative = (m,k) =>
          Lagrangian__GT_state_derivative
              .call(null,L_harmonic
                  .call(null,m,k));
 
-     //(def up01 (up 1.0 (up 1.0 2.0) (up 3.0 4.0)))
      let up01 = up.call(null, 1.0,
                         up.call(null, 1.0, 2.0),
                         up.call(null, 3.0, 4.0));
 
-     document.body.append(up01.toString() + " ");
-
-     //(def harmonic_state_advancer (state-advancer harmonic-state-derivative 2.0 1.0))
-     let harmonic_state_advancer = state_advancer.call(null,harmonic_state_derivative,2.0,1.0);
+     let harmonic_state_advancer =
+         state_advancer.call(null,harmonic_state_derivative,2.0,1.0);
 
      try {
          harmonic_state_advancer.call(null, up01, 10.0, 1.0e-12);
      } catch (error) {
          document.body.append(error);
+         // TypeError: Cannot mix BigInt and other types, use explicit conversions
      }
     </script>
 
