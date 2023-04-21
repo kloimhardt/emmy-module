@@ -1,7 +1,8 @@
 {:deps true
  :builds {:emmy-esm
           {:asset-path "out"
-           :compiler-options {:optimizations :advanced
+           :compiler-options {;; :optimizations :simple
+                              :optimizations :advanced
                               :output-wrapper false
                               :source-map false}
            :devtools {:http-root "."
