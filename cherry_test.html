@@ -3,52 +3,82 @@
     <head>
 
     <script>
-     var get_code = (nodename) =>
-         document.getElementById(nodename).innerHTML;
+     var print_ln = (txt) => document.body.append(txt + " -- ");
 
-     function add_module(preamble, text) {
-         var el = document.createElement('script');
+     function add_module(id, js_preamble, cljs_code) {
+        var el = document.createElement('script');
 
-         el.innerHTML =
-        preamble +
+        el.type = 'module';
+
+        el.innerHTML =
+        js_preamble +
+        'print_ln("' + id + '");' +
         " try {" +
-        text +
+        cljs_code +
         "} catch (error) {print_ln(error);};"
 
-         el.type = 'module';
          document.getElementsByTagName('head')[0].appendChild(el);
      }
 
-     var print_ln = (txt) => document.body.append(txt + " -- ");
     </script>
 
   </head>
    <body>
 
-       <pre id="one">
-(print_ln (+ 1 2))
+       <!-- works nice  -->
+       <pre id="A">
+(print_ln (+ 1 3))
        </pre>
 
-       <pre id="two">
-(print_ln (.toString (up (+ 3 4))))
-       </pre>
-
-       <pre id="three">
+       <!-- require is ignored, works nice with workaround -->
+       <pre id="B">
 (require '["./out/main.js" :refer [up]])
 (print_ln (.toString (up (+ 3 4))))
+       </pre>
+
+       <!-- works nice with workaround  -->
+       <pre id="C">
+(print_ln (L-harmonic 1 2))
+       </pre>
+
+       <!-- the "->" causes problems with edamame -->
+       <pre id="D">
+(Lagrangian->state-derivative (L-harmonic 1 2))
        </pre>
 
        <script type="module">
         import {compile_string} from "./out/main.js";
 
-        add_module("", compile_string(get_code("one")));
-        //--> 3
+        let get_code = (nodename) =>
+            document.getElementById(nodename).innerHTML;
 
-        add_module('import {up} from "./out/main.js";',
-                   compile_string(get_code("two")));
+        add_module("A", "", compile_string(get_code("A")));
+        //--> 4
 
-        //--> (up 7)
-        add_module("",compile_string(get_code("three")));
+        add_module("B1", "", compile_string(get_code("B")));
+        //ReferenceError: up is not defined
+
+        print_ln("B2: " + compile_string(get_code("B")));
+        //->> print_ln.call(null, up.call(null, (3 + 4)).toString());
+        //ReferenceError occurres because compile_string ignores the "require"
+
+        add_module("B3",
+                   'import {up} from "./out/main.js";',
+                   compile_string(get_code("B")));
+        //--> (up 7) //Example B finally works
+
+        add_module("C",
+                   'import {L_harmonic, Lagrangian__GT_state_derivative} from "./out/main.js";',
+                   compile_string(get_code("C")));
+        //function(c){... //works
+
+        try {
+              compile_string(get_code("D"));
+        } catch (error) {
+            print_ln("D: " + error);
+            // :type :edamame/error "EOF while reading, expected ) to match ( at [1,1]"
+            // the "->" causes problems with edamame
+        }
 
        </script>
 
