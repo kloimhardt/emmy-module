@@ -1,5 +1,5 @@
 {:deps
  {thheller/shadow-cljs {:mvn/version "2.22.10"}
-  org.mentat/emmy {:mvn/version "0.30.0"}
-  #_#_io.github.mentat-collective/emmy
-  {:git/sha "5db17cc9ebb8c3286075665174848d62eb2dda60"}}}
+  #_#_org.mentat/emmy {:mvn/version "0.30.0"}
+  io.github.mentat-collective/emmy
+    {:git/sha "7fac677d014639ef52bdbb57d81999458c48c911"}}}

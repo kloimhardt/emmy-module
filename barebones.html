@@ -28,16 +28,7 @@
          state_advancer.call(null,harmonic_state_derivative,2.0,1.0);
 
      try {
-         const opts = cljs.core.hash_map.call(
-           null,
-           cljs.core.keyword.call(null, "epsilon"),
-           1.0e-12,
-           cljs.core.keyword.call(null, "compile?"),
-           true
-         );
-         document.body.append(
-           harmonic_state_advancer.call(null, up01, 10.0, opts)
-         );
+         document.body.append(harmonic_state_advancer.call(null, up01, 10.0, 1.0e-12));
      } catch (error) {
          document.body.append(error);
          // TypeError: Cannot mix BigInt and other types, use explicit conversions
