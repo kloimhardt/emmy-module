@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+    <head>
+
+    <script>
+     var get_code = (nodename) =>
+         document.getElementById(nodename).innerHTML;
+
+     function add_module(preamble, text) {
+         var el = document.createElement('script');
+
+         el.innerHTML =
+        preamble +
+        " try {" +
+        text +
+        "} catch (error) {print_ln(error);};"
+
+         el.type = 'module';
+         document.getElementsByTagName('head')[0].appendChild(el);
+     }
+
+     var print_ln = (txt) => document.body.append(txt + " -- ");
+    </script>
+
+  </head>
+   <body>
+
+       <pre id="one">
+(print_ln (+ 1 2))
+       </pre>
+
+       <pre id="two">
+(print_ln (.toString (up (+ 3 4))))
+       </pre>
+
+       <pre id="three">
+(require '["./out/main.js" :refer [up]])
+(print_ln (.toString (up (+ 3 4))))
+       </pre>
+
+       <script type="module">
+        import {compile_string} from "./out/main.js";
+
+        add_module("", compile_string(get_code("one")));
+        //--> 3
+
+        add_module('import {up} from "./out/main.js";',
+                   compile_string(get_code("two")));
+
+        //--> (up 7)
+        add_module("",compile_string(get_code("three")));
+
+       </script>
+
+   </body>
+</html>

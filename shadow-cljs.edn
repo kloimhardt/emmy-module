@@ -53,6 +53,8 @@
                                       literal_function emmy.abstract.function/literal_function
                                       multidimensional_minimize emmy.numerical.minimize/multidimensional_minimize
                                       linear_interpolants emmy.mechanics.lagrange/linear_interpolants
-                                      make_path emmy.mechanics.lagrange/make_path}}}
+                                      make_path emmy.mechanics.lagrange/make_path
+
+                                      compile_string cherry.embed/compile_string}}}
            :output-dir "out"
            :target :esm}}}
