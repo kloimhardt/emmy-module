@@ -1,6 +1,8 @@
 <html>
    <body>
        <script type="module">
+        // first build main.js:
+        // emmy-module$ shadow-cljs release emmy-esm
         import {compile_string} from "./out/main.js";
         console.log(compile_string('(require ["A"]) (equire ["A"])'))
        </script>
