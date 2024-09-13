@@ -1,4 +1,29 @@
 # Emmy CAS as JavaScript Module
+## This repo is obsolete, look at https://github.com/mentat-collective/emmy.js
+emmy.js is a project by mentat-collective to produce an npm module for Emmy. Use browserify to create a bundle for the browser like this:
+
+in directory `emmy.js/build` create a file `emmy_browser.js`
+```
+const emmy = require('./Emmy.js');
+window.emmy = emmy;
+```
+
+```
+emmy.js/build$ npm install -g browserify
+emmy.js/build$ browserify emmy_browser.js -o emmy_bundle.js
+```
+then, in an `html` file you can write:
+
+```
+<script src="/emmy.js/build/emmy_bundle.js"></script>
+
+<script>
+    console.log("the number Pi");
+    console.log(emmy.pi);
+</script>
+```
+
+## Old description
 This repository is very small and only contains the shadow-cljs configuration to compile the [Emmy code repository](https://github.com/mentat-collective/emmy).
 
 To build the Emmy module and start a web server, type (you need [Shadow-cljs](https://shadow-cljs.github.io/docs/UsersGuide.html)):
